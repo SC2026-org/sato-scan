@@ -27,60 +27,74 @@
   </div>
 
   <!-- Scanner Container -->
-  <div class="bg-white rounded-3xl p-4 shadow-xl flex flex-col gap-3">
+  <div class="bg-white rounded-3xl p-4 shadow-xl flex flex-col gap-3.5">
     
-    <!-- Pilih Cabang & Olahraga -->
-    <div class="grid grid-cols-2 gap-2">
-      <div>
-        <label class="text-[10px] font-bold text-gray-600 mb-1 block">Cabang</label>
-        <div class="relative">
-          <select id="selectCabang" onchange="onCabangChange()"
-            class="w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]">
-            <option value="">Memuat cabang...</option>
-          </select>
-          <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[8px]">▼</div>
+    <!-- Bagian Pemilihan & Kunci Sesi -->
+    <div class="bg-gray-50 border border-gray-100 rounded-2xl p-3 flex flex-col gap-2.5">
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[10px] font-bold text-gray-600 mb-1 block">Cabang</label>
+          <div class="relative">
+            <select id="selectCabang" onchange="onCabangChange()"
+              class="w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]">
+              <option value="">-- Pilih Cabang --</option>
+            </select>
+            <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[8px]">▼</div>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-gray-600 mb-1 block">Olahraga</label>
+          <div class="relative">
+            <select id="selectOlahraga" disabled
+              class="w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]">
+              <option value="">-- Pilih Olahraga --</option>
+            </select>
+            <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[8px]">▼</div>
+          </div>
         </div>
       </div>
-      <div>
-        <label class="text-[10px] font-bold text-gray-600 mb-1 block">Olahraga</label>
-        <div class="relative">
-          <select id="selectOlahraga" onchange="onOlahragaChange()" disabled
-            class="w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]">
-            <option value="">Pilih cabang dulu</option>
-          </select>
-          <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[8px]">▼</div>
-        </div>
-      </div>
+
+      <!-- Tombol Kunci / Ubah Sesi -->
+      <button id="btnSimpanSesi" onclick="handleTombolSesi()"
+        class="w-full bg-[#ECB140] text-[#1E4D3E] font-bold text-xs py-2 rounded-xl shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5">
+        <span>🔒</span>
+        <span id="labelBtnSesi">Simpan &amp; Kunci Sesi</span>
+      </button>
     </div>
 
-    <!-- Area Kamera Scanner -->
-    <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden flex items-center justify-center">
-      <div id="reader" class="w-full h-full"></div>
+    <!-- Area Scanner & Manual (Terkunci sebelum sesi valid) -->
+    <div id="areaAbsensi" class="opacity-40 pointer-events-none transition-all duration-300 flex flex-col gap-3">
       
-      <!-- Overlay Izin Kamera -->
-      <div id="cameraPrompt" class="absolute inset-0 bg-gray-900/90 flex flex-col items-center justify-center p-4 text-center z-20">
-        <span class="text-3xl mb-2">📷</span>
-        <p class="text-white text-xs font-semibold mb-3">Ketuk untuk mengaktifkan scanner kamera</p>
-        <button onclick="requestCameraAccess()" class="bg-[#ECB140] text-[#1E4D3E] font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition">
-          Aktifkan Kamera
+      <!-- Area Kamera Scanner -->
+      <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden flex items-center justify-center">
+        <div id="reader" class="w-full h-full"></div>
+        
+        <!-- Overlay Izin Kamera -->
+        <div id="cameraPrompt" class="absolute inset-0 bg-gray-900/90 flex flex-col items-center justify-center p-4 text-center z-20">
+          <span class="text-3xl mb-2">📷</span>
+          <p class="text-white text-xs font-semibold mb-3">Ketuk untuk mengaktifkan scanner kamera</p>
+          <button id="btnAktifkanKamera" onclick="requestCameraAccess()" class="bg-[#ECB140] text-[#1E4D3E] font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition">
+            Aktifkan Kamera
+          </button>
+        </div>
+
+        <div id="scanOverlay" class="absolute inset-0 pointer-events-none border-2 border-[#ECB140] m-8 rounded-2xl opacity-60 hidden"></div>
+      </div>
+
+      <!-- Status Hasil Scan -->
+      <div id="statusBox" class="min-h-[44px] bg-gray-50 border border-gray-100 rounded-xl p-2.5 flex items-center justify-center text-center">
+        <p id="statusText" class="text-xs text-gray-400 font-medium">Pilih dan simpan sesi untuk memulai scan</p>
+      </div>
+
+      <!-- Input Manual Alternatif -->
+      <div class="border-t border-dashed border-gray-200 pt-3 flex gap-2">
+        <input type="text" id="inputManual" placeholder="Kode Manual (6 digit)"
+          class="flex-1 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]" />
+        <button onclick="prosesManual()" class="bg-[#1E4D3E] text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-[0.98] transition">
+          Kirim
         </button>
       </div>
 
-      <div id="scanOverlay" class="absolute inset-0 pointer-events-none border-2 border-[#ECB140] m-8 rounded-2xl opacity-60 hidden"></div>
-    </div>
-
-    <!-- Status Hasil Scan -->
-    <div id="statusBox" class="min-h-[44px] bg-gray-50 border border-gray-100 rounded-xl p-2.5 flex items-center justify-center text-center">
-      <p id="statusText" class="text-xs text-gray-400 font-medium">Pilih cabang & olahraga, lalu aktifkan kamera</p>
-    </div>
-
-    <!-- Input Manual Alternatif -->
-    <div class="border-t border-dashed border-gray-200 pt-3 flex gap-2">
-      <input type="text" id="inputManual" placeholder="Kode Manual (6 digit)"
-        class="flex-1 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]" />
-      <button onclick="prosesManual()" class="bg-[#1E4D3E] text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition">
-        Kirim
-      </button>
     </div>
 
   </div>
@@ -88,21 +102,19 @@
   <p class="text-center text-white/40 text-[10px] py-2">SATO Sport &mdash; Powered On Site</p>
 
   <script>
-    // URL Backend Web App Deployment Aktif Terbaru
     var BACKEND_URL = "https://script.google.com/macros/s/AKfycbyOwR22_3brncTkrJcrGwxufbmlXg4QfScFP2n-QefL_umC38H5PmqAfgRnzjxBy3yP1g/exec";
     
     var tokenPetugas = "";
     var namaPetugas = "";
     var html5QrCode = null;
     var isProcessing = false;
+    var isSesiTerkunci = false;
 
     function parseHash() {
       try {
         var hash = window.location.hash.substring(1);
         var btnBack = document.getElementById('btnKembali');
-        if (btnBack) {
-          btnBack.href = BACKEND_URL;
-        }
+        if (btnBack) btnBack.href = BACKEND_URL;
 
         if (!hash) return;
         var params = new URLSearchParams(hash);
@@ -122,19 +134,24 @@
         .then(function(res) { return res.json(); })
         .then(function(daftarCabang) {
           var selCabang = document.getElementById('selectCabang');
-          selCabang.innerHTML = '<option value="">Pilih Cabang</option>';
+          selCabang.innerHTML = '<option value="">-- Pilih Cabang --</option>';
           
           daftarCabang.forEach(function(c) {
-            var opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            selCabang.appendChild(opt);
+            var valClean = String(c || '').trim();
+            if (valClean) {
+              var opt = document.createElement('option');
+              opt.value = valClean;
+              opt.textContent = valClean;
+              selCabang.appendChild(opt);
+            }
           });
 
-          var savedCabang = localStorage.getItem('sato_scan_cabang');
+          var savedCabang = (localStorage.getItem('sato_scan_cabang') || '').trim();
+          var savedOlahraga = (localStorage.getItem('sato_scan_olahraga') || '').trim();
+
           if (savedCabang && daftarCabang.indexOf(savedCabang) !== -1) {
             selCabang.value = savedCabang;
-            muatOlahraga(savedCabang);
+            muatOlahraga(savedCabang, savedOlahraga, true);
           }
         })
         .catch(function(err) {
@@ -143,18 +160,16 @@
     }
 
     function onCabangChange() {
-      var cabang = document.getElementById('selectCabang').value;
-      localStorage.setItem('sato_scan_cabang', cabang);
-      localStorage.removeItem('sato_scan_olahraga');
-      muatOlahraga(cabang);
+      var cabang = (document.getElementById('selectCabang').value || '').trim();
+      muatOlahraga(cabang, null, false);
     }
 
-    function muatOlahraga(cabang) {
+    function muatOlahraga(cabang, autoSelectOlahraga, isAutoLock) {
       var selOlahraga = document.getElementById('selectOlahraga');
       if (!cabang) {
         selOlahraga.disabled = true;
         selOlahraga.className = 'w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-semibold';
-        selOlahraga.innerHTML = '<option value="">Pilih cabang dulu</option>';
+        selOlahraga.innerHTML = '<option value="">-- Pilih Cabang Dulu --</option>';
         return;
       }
 
@@ -164,20 +179,25 @@
       fetch(BACKEND_URL + "?action=getOlahragaByCabang&cabang=" + encodeURIComponent(cabang))
         .then(function(res) { return res.json(); })
         .then(function(daftarOlahraga) {
-          selOlahraga.innerHTML = '<option value="">Pilih Olahraga</option>';
+          selOlahraga.innerHTML = '<option value="">-- Pilih Olahraga --</option>';
           daftarOlahraga.forEach(function(o) {
-            var opt = document.createElement('option');
-            opt.value = o;
-            opt.textContent = o;
-            selOlahraga.appendChild(opt);
+            var valClean = String(o || '').trim();
+            if (valClean) {
+              var opt = document.createElement('option');
+              opt.value = valClean;
+              opt.textContent = valClean;
+              selOlahraga.appendChild(opt);
+            }
           });
 
           selOlahraga.disabled = false;
-          selOlahraga.className = 'w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]';
+          selOlahraga.className = 'w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]';
 
-          var savedOlahraga = localStorage.getItem('sato_scan_olahraga');
-          if (savedOlahraga && daftarOlahraga.indexOf(savedOlahraga) !== -1) {
-            selOlahraga.value = savedOlahraga;
+          if (autoSelectOlahraga && daftarOlahraga.indexOf(autoSelectOlahraga) !== -1) {
+            selOlahraga.value = autoSelectOlahraga;
+            if (isAutoLock) {
+              kunciSesiUI(true);
+            }
           }
         })
         .catch(function(err) {
@@ -185,9 +205,74 @@
         });
     }
 
-    function onOlahragaChange() {
-      var olahraga = document.getElementById('selectOlahraga').value;
-      localStorage.setItem('sato_scan_olahraga', olahraga);
+    function validasiSesiInput(c, o) {
+      var valC = String(c || '').trim();
+      var valO = String(o || '').trim();
+      
+      var invalidPatterns = ["", "pilih cabang", "pilih olahraga", "-- pilih cabang --", "-- pilih olahraga --", "-- pilih cabang dulu --"];
+      
+      if (invalidPatterns.indexOf(valC.toLowerCase()) !== -1) return false;
+      if (invalidPatterns.indexOf(valO.toLowerCase()) !== -1) return false;
+      return true;
+    }
+
+    function handleTombolSesi() {
+      if (!isSesiTerkunci) {
+        var c = document.getElementById('selectCabang').value;
+        var o = document.getElementById('selectOlahraga').value;
+
+        if (!validasiSesiInput(c, o)) {
+          alert("Silakan pilih Cabang dan Olahraga yang valid terlebih dahulu!");
+          return;
+        }
+
+        localStorage.setItem('sato_scan_cabang', c.trim());
+        localStorage.setItem('sato_scan_olahraga', o.trim());
+        kunciSesiUI(true);
+      } else {
+        kunciSesiUI(false);
+      }
+    }
+
+    function kunciSesiUI(lock) {
+      var selCabang = document.getElementById('selectCabang');
+      var selOlahraga = document.getElementById('selectOlahraga');
+      var btn = document.getElementById('btnSimpanSesi');
+      var labelBtn = document.getElementById('labelBtnSesi');
+      var areaAbsensi = document.getElementById('areaAbsensi');
+
+      if (lock) {
+        if (!validasiSesiInput(selCabang.value, selOlahraga.value)) {
+          kunciSesiUI(false);
+          return;
+        }
+
+        isSesiTerkunci = true;
+        selCabang.disabled = true;
+        selOlahraga.disabled = true;
+        selCabang.classList.add('bg-gray-100', 'text-gray-500');
+        selOlahraga.classList.add('bg-gray-100', 'text-gray-500');
+
+        btn.className = "w-full bg-gray-200 text-gray-700 font-bold text-xs py-2 rounded-xl active:scale-[0.98] transition flex items-center justify-center gap-1.5";
+        btn.querySelector('span:first-child').textContent = "✏️";
+        labelBtn.textContent = "Ubah Sesi Olahraga";
+
+        areaAbsensi.classList.remove('opacity-40', 'pointer-events-none');
+        setStatus("Sesi aktif: " + selCabang.value + " - " + selOlahraga.value + ". Silakan scan.", "normal");
+      } else {
+        isSesiTerkunci = false;
+        selCabang.disabled = false;
+        selOlahraga.disabled = false;
+        selCabang.classList.remove('bg-gray-100', 'text-gray-500');
+        selOlahraga.classList.remove('bg-gray-100', 'text-gray-500');
+
+        btn.className = "w-full bg-[#ECB140] text-[#1E4D3E] font-bold text-xs py-2 rounded-xl shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5";
+        btn.querySelector('span:first-child').textContent = "🔒";
+        labelBtn.textContent = "Simpan & Kunci Sesi";
+
+        areaAbsensi.classList.add('opacity-40', 'pointer-events-none');
+        setStatus("Pilih dan simpan sesi untuk memulai scan", "normal");
+      }
     }
 
     function setStatus(pesan, tipe) {
@@ -213,8 +298,8 @@
       var cabang = document.getElementById('selectCabang').value;
       var olahraga = document.getElementById('selectOlahraga').value;
 
-      if (!cabang || !olahraga) {
-        setStatus("Pilih Cabang dan Olahraga terlebih dahulu!", "error");
+      if (!validasiSesiInput(cabang, olahraga) || !isSesiTerkunci) {
+        setStatus("Pilih dan kunci sesi Cabang & Olahraga yang valid terlebih dahulu!", "error");
         return;
       }
 
@@ -224,8 +309,8 @@
       var dataKirim = {
         action: 'catat_kehadiran',
         tokenPetugas: tokenPetugas,
-        cabang: cabang,
-        sesiOlahraga: olahraga,
+        cabang: cabang.trim(),
+        sesiOlahraga: olahraga.trim(),
         qrPayload: payloadQr || '',
         kodeManual: kodeManual || ''
       };
@@ -252,13 +337,21 @@
         setTimeout(function() {
           isProcessing = false;
           if (document.getElementById('statusText').textContent.indexOf('Berhasil') !== -1) {
-            setTimeout(function() { setStatus("Arahkan kamera ke QR Code peserta berikutnya", "normal"); }, 2500);
+            setStatus("Arahkan kamera ke QR Code peserta berikutnya", "normal");
           }
         }, 1500);
       });
     }
 
     function requestCameraAccess() {
+      var cabang = document.getElementById('selectCabang').value;
+      var olahraga = document.getElementById('selectOlahraga').value;
+
+      if (!validasiSesiInput(cabang, olahraga) || !isSesiTerkunci) {
+        alert("Pilih dan klik 'Simpan & Kunci Sesi' terlebih dahulu sebelum menyalakan kamera!");
+        return;
+      }
+
       var promptEl = document.getElementById('cameraPrompt');
       var overlayEl = document.getElementById('scanOverlay');
       setStatus("Meminta izin kamera...", "loading");
@@ -284,7 +377,7 @@
               initHtml5Scanner();
             })
             .catch(function() {
-              setStatus("Izin kamera ditolak di pengaturan browser HP Anda.", "error");
+              setStatus("Izin kamera ditolak di browser HP Anda.", "error");
             });
         });
     }
@@ -304,7 +397,7 @@
         function(decodedText) { kirimAbsensi(decodedText, ''); },
         function() {}
       ).then(function() {
-        setStatus("Arahkan kamera ke QR Code peserta", "normal");
+        setStatus("Scanner aktif. Arahkan kamera ke QR Code peserta", "normal");
       }).catch(function() {
         html5QrCode.start(
           { facingMode: "user" },
@@ -312,7 +405,7 @@
           function(decodedText) { kirimAbsensi(decodedText, ''); },
           function() {}
         ).then(function() {
-          setStatus("Arahkan kamera ke QR Code peserta", "normal");
+          setStatus("Scanner aktif. Arahkan kamera ke QR Code peserta", "normal");
         }).catch(function(err2) {
           setStatus("Gagal memuat kamera: " + err2, "error");
         });

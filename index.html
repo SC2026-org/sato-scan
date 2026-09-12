@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SATO Sport - Scanner Kehadiran</title>
+  <title>SATO Sport - Scanner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
@@ -31,22 +31,24 @@
     <!-- Pilih Sesi -->
     <div>
       <label class="text-[11px] font-bold text-gray-600 mb-1 block">Sesi Olahraga</label>
-      <input type="text" id="inputSesi" value="Sesi Olahraga" placeholder="Contoh: Sesi Pagi / Badminton A"
+      <input type="text" id="inputSesi" value="Sesi Olahraga" placeholder="Contoh: Sesi 1 / Pagi"
         class="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]" />
     </div>
 
     <!-- Area Kamera Scanner -->
-    <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden flex flex-col items-center justify-center p-3">
+    <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden flex items-center justify-center">
       <div id="reader" class="w-full h-full"></div>
       
-      <!-- Overlay Tombol Buka Kamera (Trigger Gesture) -->
+      <!-- Overlay Tombol Izin Kamera -->
       <div id="cameraPrompt" class="absolute inset-0 bg-gray-900/90 flex flex-col items-center justify-center p-4 text-center z-20">
         <span class="text-3xl mb-2">📷</span>
-        <p class="text-white text-xs font-semibold mb-3">Ketuk tombol di bawah untuk menyalakan scanner</p>
+        <p class="text-white text-xs font-semibold mb-3">Ketuk untuk mengizinkan akses kamera HP</p>
         <button onclick="requestCameraAccess()" class="bg-[#ECB140] text-[#1E4D3E] font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition">
           Aktifkan Kamera
         </button>
       </div>
+
+      <div id="scanOverlay" class="absolute inset-0 pointer-events-none border-2 border-[#ECB140] m-8 rounded-2xl opacity-60 hidden"></div>
     </div>
 
     <!-- Status Hasil Scan -->
@@ -78,9 +80,7 @@
     function parseHash() {
       try {
         var hash = window.location.hash.substring(1);
-        var btnKembali = document.getElementById('btnKembali');
-        btnKembali.href = BACKEND_URL + '?authuser=0';
-
+        document.getElementById('btnKembali').href = BACKEND_URL + '?authuser=0';
         if (!hash) return;
         var params = new URLSearchParams(hash);
         tokenPetugas = params.get('token') || '';
@@ -156,10 +156,11 @@
 
     function requestCameraAccess() {
       var promptEl = document.getElementById('cameraPrompt');
+      var overlayEl = document.getElementById('scanOverlay');
       setStatus("Meminta izin kamera...", "loading");
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setStatus("Browser tidak mendukung akses kamera langsung.", "error");
+        setStatus("Browser tidak mendukung WebRTC kamera.", "error");
         return;
       }
 
@@ -167,21 +168,22 @@
         .then(function(stream) {
           stream.getTracks().forEach(function(t) { t.stop(); });
           if (promptEl) promptEl.classList.add('hidden');
+          if (overlayEl) overlayEl.classList.remove('hidden');
           initHtml5Scanner();
         })
-        .catch(function(err) {
+        .catch(function() {
           navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(stream2) {
               stream2.getTracks().forEach(function(t) { t.stop(); });
               if (promptEl) promptEl.classList.add('hidden');
+              if (overlayEl) overlayEl.classList.remove('hidden');
               initHtml5Scanner();
             })
-            .catch(function(finalErr) {
-              setStatus("Izin ditolak. Izinkan kamera di pengaturan browser.", "error");
+            .catch(function() {
+              setStatus("Izin kamera ditolak di browser HP Anda.", "error");
             });
         });
     }
-    window.requestCameraAccess = requestCameraAccess;
 
     function initHtml5Scanner() {
       if (!window.Html5Qrcode) {
@@ -198,19 +200,19 @@
         function(decodedText) {
           kirimAbsensi(decodedText, '');
         },
-        function(err) {}
+        function() {}
       ).then(function() {
         setStatus("Arahkan kamera ke QR Code peserta", "normal");
-      }).catch(function(e) {
+      }).catch(function() {
         html5QrCode.start(
           { facingMode: "user" },
           config,
           function(decodedText) { kirimAbsensi(decodedText, ''); },
-          function(err) {}
+          function() {}
         ).then(function() {
           setStatus("Arahkan kamera ke QR Code peserta", "normal");
         }).catch(function(err2) {
-          setStatus("Gagal memulai scanner: " + err2, "error");
+          setStatus("Gagal memuat kamera: " + err2, "error");
         });
       });
     }

@@ -29,7 +29,7 @@
   <!-- Scanner Container -->
   <div class="bg-white rounded-3xl p-4 shadow-xl flex flex-col gap-3">
     
-    <!-- Pilih Cabang & Olahraga (Terkunci Otomatis) -->
+    <!-- Pilih Cabang & Olahraga -->
     <div class="grid grid-cols-2 gap-2">
       <div>
         <label class="text-[10px] font-bold text-gray-600 mb-1 block">Cabang</label>
@@ -60,7 +60,7 @@
       <!-- Overlay Izin Kamera -->
       <div id="cameraPrompt" class="absolute inset-0 bg-gray-900/90 flex flex-col items-center justify-center p-4 text-center z-20">
         <span class="text-3xl mb-2">📷</span>
-        <p class="text-white text-xs font-semibold mb-3">Ketuk untuk mengaktifkan kamera scanner</p>
+        <p class="text-white text-xs font-semibold mb-3">Ketuk untuk mengaktifkan scanner kamera</p>
         <button onclick="requestCameraAccess()" class="bg-[#ECB140] text-[#1E4D3E] font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition">
           Aktifkan Kamera
         </button>
@@ -88,6 +88,7 @@
   <p class="text-center text-white/40 text-[10px] py-2">SATO Sport &mdash; Powered On Site</p>
 
   <script>
+    // URL Backend Web App Deployment Aktif Terbaru
     var BACKEND_URL = "https://script.google.com/macros/s/AKfycbyOwR22_3brncTkrJcrGwxufbmlXg4QfScFP2n-QefL_umC38H5PmqAfgRnzjxBy3yP1g/exec";
     
     var tokenPetugas = "";
@@ -95,10 +96,14 @@
     var html5QrCode = null;
     var isProcessing = false;
 
-    // Baca Parameter Hash URL (#token=...&nama=...)
     function parseHash() {
       try {
         var hash = window.location.hash.substring(1);
+        var btnBack = document.getElementById('btnKembali');
+        if (btnBack) {
+          btnBack.href = BACKEND_URL;
+        }
+
         if (!hash) return;
         var params = new URLSearchParams(hash);
         tokenPetugas = params.get('token') || '';
@@ -112,7 +117,6 @@
       }
     }
 
-    // Muat Daftar Cabang dan Pasang Pilihan yang Terkunci di Session
     function muatCabang() {
       fetch(BACKEND_URL + "?action=getDaftarCabang")
         .then(function(res) { return res.json(); })
@@ -127,7 +131,6 @@
             selCabang.appendChild(opt);
           });
 
-          // Cek apakah sebelumnya sudah tersimpan di localStorage
           var savedCabang = localStorage.getItem('sato_scan_cabang');
           if (savedCabang && daftarCabang.indexOf(savedCabang) !== -1) {
             selCabang.value = savedCabang;
@@ -172,7 +175,6 @@
           selOlahraga.disabled = false;
           selOlahraga.className = 'w-full appearance-none px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]';
 
-          // Pasang pilihan olahraga yang tersimpan
           var savedOlahraga = localStorage.getItem('sato_scan_olahraga');
           if (savedOlahraga && daftarOlahraga.indexOf(savedOlahraga) !== -1) {
             selOlahraga.value = savedOlahraga;

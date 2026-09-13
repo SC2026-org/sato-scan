@@ -4,111 +4,118 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SATO Sport - Scanner</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest: '#1E4D3E',
+            mustard: '#ECB140',
+            cream: '#F7F6F2'
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #1E4D3E; color: #1f2937; padding: 14px; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; max-width: 440px; margin: 0 auto; }
-    .header { display: flex; align-items: center; justify-content: space-between; color: white; padding-bottom: 12px; }
-    .header h1 { font-size: 16px; font-weight: 700; }
-    .header p { font-size: 11px; opacity: 0.75; }
-    .btn-dash { font-size: 12px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); padding: 5px 12px; border-radius: 9999px; color: white; text-decoration: none; font-weight: 600; }
-    .card { background: white; border-radius: 18px; padding: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 14px; }
-    .field-group label { font-size: 11px; font-weight: 600; color: #6b7280; display: block; margin-bottom: 3px; }
-    .select-wrap { position: relative; }
-    .select-wrap select { width: 100%; appearance: none; padding: 10px 14px; border-radius: 9px; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 12px; font-weight: 600; color: #374151; outline: none; }
-    .select-wrap select:disabled { background: #f3f4f6; color: #9ca3af; }
-    .select-wrap::after { content: "▼"; font-size: 9px; color: #9ca3af; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
-    .btn-sesi { width: 100%; background: #ECB140; color: #1E4D3E; font-weight: 700; font-size: 13px; padding: 11px; border-radius: 12px; border: none; cursor: pointer; transition: 0.15s; }
-    .btn-sesi.locked { background: white; color: #1E4D3E; border: 1.5px solid #1E4D3E; }
-    .btn-sesi:active { transform: scale(0.98); }
-    .area-scan { display: flex; flex-direction: column; gap: 12px; border-top: 1px dashed #e5e7eb; padding-top: 12px; transition: 0.2s; }
-    .area-scan.locked { opacity: 0.35; pointer-events: none; }
-    .reader-box { position: relative; width: 100%; aspect-ratio: 1/1; background: black; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    #reader { width: 100% !important; height: 100% !important; border: none !important; }
-    #reader video { border-radius: 14px; object-fit: cover; width: 100% !important; height: 100% !important; }
-    .camera-prompt { position: absolute; inset: 0; background: rgba(17,24,39,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; text-align: center; z-index: 20; }
-    .btn-kamera { background: #ECB140; color: #1E4D3E; font-weight: 700; font-size: 13px; padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer; }
-    .status-box { min-height: 44px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 500; color: #6b7280; }
-    .status-box.success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; font-weight: 700; }
-    .status-box.error { background: #fff1f2; border-color: #fecdd3; color: #be123c; font-weight: 600; }
-    .status-box.loading { background: #fffbeb; border-color: #fde68a; color: #b45309; font-weight: 600; }
-    .manual-box { display: flex; gap: 8px; }
-    .manual-box input { flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 13px; font-family: monospace; font-weight: 700; outline: none; }
-    .manual-box button { background: #1E4D3E; color: white; padding: 9px 18px; border-radius: 10px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
-    .footer { text-align: center; color: rgba(255,255,255,0.4); font-size: 11px; padding: 10px 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #1E4D3E; }
+    #reader video { border-radius: 1rem; object-fit: cover; width: 100% !important; height: 100% !important; }
+    #reader { border: none !important; }
   </style>
 </head>
-<body>
+<body class="min-h-screen text-gray-800 flex flex-col justify-between p-4 max-w-md mx-auto">
 
   <!-- Header -->
-  <div class="header">
+  <div class="flex items-center justify-between text-white pb-3 pt-2">
     <div>
-      <h1>Scanner Petugas</h1>
-      <p id="labelPetugas">Petugas Standby</p>
+      <h1 class="text-base font-bold">Scanner Petugas</h1>
+      <p id="labelPetugas" class="text-[11px] text-white/70">Petugas Standby</p>
     </div>
-    <a id="btnKembali" href="https://script.google.com/macros/s/AKfycbyOwR22_3brncTkrJcrGwxufbmlXg4QfScFP2n-QefL_umC38H5PmqAfgRnzjxBy3yP1g/exec" class="btn-dash">
+    <a id="btnKembali" href="https://script.google.com/macros/s/AKfycbyOwR22_3brncTkrJcrGwxufbmlXg4QfScFP2n-QefL_umC38H5PmqAfgRnzjxBy3yP1g/exec" 
+       class="text-xs bg-white/10 border border-white/20 px-3 py-1.5 rounded-full text-white font-semibold active:scale-95 transition no-underline">
       ← Dashboard
     </a>
   </div>
 
-  <!-- Form Card -->
-  <div class="card">
+  <!-- Scanner Container -->
+  <div class="bg-white rounded-3xl p-4 shadow-xl flex flex-col gap-3">
     
-    <div class="field-group">
-      <label>Cabang</label>
-      <div class="select-wrap">
-        <select id="selectCabang" onchange="onCabangChange()">
-          <option value="">Memuat cabang dari server...</option>
-        </select>
+    <!-- Dropdown Cabang & Olahraga (Grid 2 Kolom Sejajar) -->
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="text-[11px] font-bold text-gray-600 mb-1 block">Cabang</label>
+        <div class="relative">
+          <select id="selectCabang" onchange="onCabangChange()"
+            class="w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E] text-xs font-semibold text-gray-700">
+            <option value="">Memuat cabang...</option>
+          </select>
+          <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">▼</div>
+        </div>
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-gray-600 mb-1 block">Olahraga</label>
+        <div class="relative">
+          <select id="selectOlahraga" disabled
+            class="w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 focus:outline-none text-xs font-semibold">
+            <option value="">Pilih cabang dulu</option>
+          </select>
+          <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">▼</div>
+        </div>
       </div>
     </div>
 
-    <div class="field-group">
-      <label>Olahraga</label>
-      <div class="select-wrap">
-        <select id="selectOlahraga" disabled>
-          <option value="">Pilih cabang dulu</option>
-        </select>
-      </div>
-    </div>
-
-    <button type="button" id="btnSimpanSesi" onclick="handleTombolSesi()" class="btn-sesi">
-      🔒 Simpan &amp; Kunci Sesi
+    <!-- Tombol Simpan & Kunci Sesi -->
+    <button type="button" id="btnSimpanSesi" onclick="handleTombolSesi()"
+      class="w-full bg-[#ECB140] text-[#1E4D3E] font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5">
+      <span id="iconBtnSesi">🔒</span>
+      <span id="labelBtnSesi">Simpan &amp; Kunci Sesi</span>
     </button>
 
-    <!-- Area Scanner & Input Manual -->
-    <div id="areaAbsensi" class="area-scan locked">
+    <!-- Area Scanner & Input Manual (Terkunci sebelum sesi disimpan) -->
+    <div id="areaAbsensi" class="opacity-30 pointer-events-none transition-all duration-300 flex flex-col gap-3 border-t border-dashed border-gray-200 pt-3">
       
-      <div class="reader-box">
-        <div id="reader"></div>
-        <div id="cameraPrompt" class="camera-prompt">
-          <span style="font-size: 28px; margin-bottom: 6px;">📷</span>
-          <p style="color: white; font-size: 12px; margin-bottom: 12px;">Ketuk untuk menyalakan scanner kamera</p>
-          <button id="btnAktifkanKamera" onclick="requestCameraAccess()" class="btn-kamera">
+      <!-- Area Kamera Scanner -->
+      <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden flex items-center justify-center">
+        <div id="reader" class="w-full h-full"></div>
+        
+        <!-- Overlay Izin Kamera -->
+        <div id="cameraPrompt" class="absolute inset-0 bg-gray-900/90 flex flex-col items-center justify-center p-4 text-center z-20">
+          <span class="text-3xl mb-2">📷</span>
+          <p class="text-white text-xs font-semibold mb-3">Ketuk untuk mengaktifkan scanner kamera</p>
+          <button id="btnAktifkanKamera" onclick="requestCameraAccess()" class="bg-[#ECB140] text-[#1E4D3E] font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition">
             Aktifkan Kamera
           </button>
         </div>
+
+        <div id="scanOverlay" class="absolute inset-0 pointer-events-none border-2 border-[#ECB140] m-8 rounded-2xl opacity-60 hidden"></div>
       </div>
 
-      <div id="statusBox" class="status-box">
-        <p id="statusText">Pilih cabang & olahraga lalu klik Simpan Sesi</p>
+      <!-- Status Box -->
+      <div id="statusBox" class="min-h-[44px] bg-gray-50 border border-gray-100 rounded-xl p-2.5 flex items-center justify-center text-center">
+        <p id="statusText" class="text-xs text-gray-400 font-medium">Pilih cabang & olahraga lalu klik Simpan Sesi</p>
       </div>
 
-      <div class="manual-box">
-        <input type="text" id="inputManual" placeholder="Kode Manual (6 digit)" />
-        <button onclick="prosesManual()">Kirim</button>
+      <!-- Input Manual -->
+      <div class="flex gap-2">
+        <input type="text" id="inputManual" placeholder="Kode Manual (6 digit)"
+          class="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#1E4D3E]" />
+        <button onclick="prosesManual()" class="bg-[#1E4D3E] text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition">
+          Kirim
+        </button>
       </div>
 
     </div>
 
   </div>
 
-  <p class="footer">SATO Sport &mdash; Powered On Site</p>
+  <p class="text-center text-white/40 text-[10px] py-2">SATO Sport &mdash; Powered On Site</p>
 
   <script>
     var BACKEND_URL = "https://script.google.com/macros/s/AKfycbyOwR22_3brncTkrJcrGwxufbmlXg4QfScFP2n-QefL_umC38H5PmqAfgRnzjxBy3yP1g/exec";
 
-    var LIVE_DATA_OLAHRAAGA = {};
+    var LIVE_DATA_MASTER = {};
     var tokenPetugas = "";
     var namaPetugas = "";
     var html5QrCode = null;
@@ -129,46 +136,45 @@
         if (namaPetugas) {
           document.getElementById('labelPetugas').textContent = 'Petugas: ' + decodeURIComponent(namaPetugas);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Gagal parse hash:", e);
+      }
     }
 
-    // Callback JSONP Resmi dari Google Apps Script
-    window.handleMasterDataOnline = function(res) {
+    // Callback JSONP untuk menerima data dari Google Apps Script
+    window.onMasterDataLoaded = function (res) {
       var selCabang = document.getElementById('selectCabang');
       if (!res || !res.success || !res.data) {
-        setStatus("Gagal memuat API: " + ((res && res.message) || "Koneksi terputus"), "error");
         selCabang.innerHTML = '<option value="">Gagal memuat cabang</option>';
         return;
       }
 
-      LIVE_DATA_OLAHRAAGA = res.data;
+      LIVE_DATA_MASTER = res.data;
       selCabang.innerHTML = '<option value="">Pilih Cabang</option>';
 
-      Object.keys(LIVE_DATA_OLAHRAAGA).forEach(function(c) {
+      Object.keys(LIVE_DATA_MASTER).forEach(function (cabang) {
         var opt = document.createElement('option');
-        opt.value = c; opt.textContent = c;
+        opt.value = cabang;
+        opt.textContent = cabang;
         selCabang.appendChild(opt);
       });
 
+      // Restore pilihan dari localStorage jika ada
       var savedCabang = (localStorage.getItem('sato_scan_cabang') || '').trim();
       var savedOlahraga = (localStorage.getItem('sato_scan_olahraga') || '').trim();
 
-      if (savedCabang && LIVE_DATA_OLAHRAAGA[savedCabang]) {
+      if (savedCabang && LIVE_DATA_MASTER[savedCabang]) {
         selCabang.value = savedCabang;
         renderOlahraga(savedCabang, savedOlahraga, true);
       }
     };
 
-    function loadApiMasterData() {
-      if (!tokenPetugas) {
-        setStatus("Akses ditolak: Token petugas tidak ditemukan. Silakan buka dari Dashboard.", "error");
-        return;
-      }
-
+    function fetchMasterDataFromAPI() {
       var script = document.createElement('script');
-      script.src = BACKEND_URL + "?action=getMasterOlahragaFull&token=" + encodeURIComponent(tokenPetugas) + "&callback=handleMasterDataOnline&_t=" + Date.now();
-      script.onerror = function() {
-        setStatus("Gagal terhubung ke API backend Google Apps Script.", "error");
+      script.src = BACKEND_URL + "?action=getMasterOlahragaFull&callback=onMasterDataLoaded&_t=" + Date.now();
+      script.onerror = function () {
+        var selCabang = document.getElementById('selectCabang');
+        selCabang.innerHTML = '<option value="">Gagal terhubung ke server</option>';
       };
       document.body.appendChild(script);
     }
@@ -180,22 +186,25 @@
 
     function renderOlahraga(cabang, autoSelectOlahraga, isAutoLock) {
       var selOlahraga = document.getElementById('selectOlahraga');
-      if (!cabang || !LIVE_DATA_OLAHRAAGA[cabang]) {
+      if (!cabang || !LIVE_DATA_MASTER[cabang]) {
         selOlahraga.disabled = true;
+        selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 focus:outline-none text-xs font-semibold';
         selOlahraga.innerHTML = '<option value="">Pilih cabang dulu</option>';
         return;
       }
 
-      var list = LIVE_DATA_OLAHRAAGA[cabang];
+      var list = LIVE_DATA_MASTER[cabang];
       selOlahraga.innerHTML = '<option value="">Pilih Olahraga</option>';
 
-      list.forEach(function(o) {
+      list.forEach(function (o) {
         var opt = document.createElement('option');
-        opt.value = o; opt.textContent = o;
+        opt.value = o;
+        opt.textContent = o;
         selOlahraga.appendChild(opt);
       });
 
       selOlahraga.disabled = false;
+      selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E] text-xs font-semibold text-gray-700';
 
       if (autoSelectOlahraga && list.indexOf(autoSelectOlahraga) !== -1) {
         selOlahraga.value = autoSelectOlahraga;
@@ -217,7 +226,7 @@
         var o = document.getElementById('selectOlahraga').value;
 
         if (!validasiSesi(c, o)) {
-          alert("Pilih Cabang dan Olahraga yang valid terlebih dahulu!");
+          alert("Pilih Cabang dan Olahraga terlebih dahulu!");
           return;
         }
 
@@ -233,6 +242,8 @@
       var selCabang = document.getElementById('selectCabang');
       var selOlahraga = document.getElementById('selectOlahraga');
       var btn = document.getElementById('btnSimpanSesi');
+      var iconBtn = document.getElementById('iconBtnSesi');
+      var labelBtn = document.getElementById('labelBtnSesi');
       var areaAbsensi = document.getElementById('areaAbsensi');
 
       if (lock) {
@@ -244,21 +255,27 @@
         isSesiTerkunci = true;
         selCabang.disabled = true;
         selOlahraga.disabled = true;
+        selCabang.className = 'w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-semibold';
+        selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-semibold';
 
-        btn.className = "btn-sesi locked";
-        btn.textContent = "✏️ Ubah Sesi Olahraga";
+        btn.className = "w-full bg-white text-[#1E4D3E] border border-[#1E4D3E] font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs flex items-center justify-center gap-1.5 active:scale-[0.98] transition";
+        iconBtn.textContent = "✏️";
+        labelBtn.textContent = "Ubah Sesi Olahraga";
 
-        areaAbsensi.classList.remove('locked');
+        areaAbsensi.classList.remove('opacity-30', 'pointer-events-none');
         setStatus("Sesi aktif: " + selCabang.value + " (" + selOlahraga.value + ")", "normal");
       } else {
         isSesiTerkunci = false;
         selCabang.disabled = false;
         selOlahraga.disabled = false;
+        selCabang.className = 'w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E] text-xs font-semibold text-gray-700';
+        selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#1E4D3E] text-xs font-semibold text-gray-700';
 
-        btn.className = "btn-sesi";
-        btn.textContent = "🔒 Simpan & Kunci Sesi";
+        btn.className = "w-full bg-[#ECB140] text-[#1E4D3E] font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5";
+        iconBtn.textContent = "🔒";
+        labelBtn.textContent = "Simpan & Kunci Sesi";
 
-        areaAbsensi.classList.add('locked');
+        areaAbsensi.classList.add('opacity-30', 'pointer-events-none');
         setStatus("Pilih cabang & olahraga lalu klik Simpan Sesi", "normal");
       }
     }
@@ -268,7 +285,16 @@
       var txt = document.getElementById('statusText');
       txt.textContent = pesan;
 
-      box.className = "status-box " + (tipe || 'normal');
+      box.className = "min-h-[44px] rounded-xl p-2.5 flex items-center justify-center text-center border ";
+      if (tipe === 'success') {
+        box.className += "bg-emerald-50 border-emerald-200 text-emerald-700 font-bold";
+      } else if (tipe === 'error') {
+        box.className += "bg-rose-50 border-rose-200 text-rose-700 font-semibold";
+      } else if (tipe === 'loading') {
+        box.className += "bg-amber-50 border-amber-200 text-amber-700 font-semibold";
+      } else {
+        box.className += "bg-gray-50 border-gray-100 text-gray-400 font-medium";
+      }
     }
 
     function kirimAbsensi(payloadQr, kodeManual) {
@@ -278,7 +304,7 @@
       var olahraga = document.getElementById('selectOlahraga').value;
 
       if (!validasiSesi(cabang, olahraga) || !isSesiTerkunci) {
-        setStatus("Pilih dan kunci sesi terlebih dahulu!", "error");
+        setStatus("Simpan dan kunci sesi Cabang & Olahraga terlebih dahulu!", "error");
         return;
       }
 
@@ -299,8 +325,8 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(dataKirim)
       })
-      .then(function(res) { return res.json(); })
-      .then(function(res) {
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
         if (res.success) {
           setStatus("✅ " + res.nama + " (" + res.olahraga + ") Berhasil Hadir!", "success");
           if (navigator.vibrate) navigator.vibrate(200);
@@ -309,14 +335,14 @@
           if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         setStatus("Gagal terhubung ke server: " + err.message, "error");
       })
-      .finally(function() {
-        setTimeout(function() {
+      .finally(function () {
+        setTimeout(function () {
           isProcessing = false;
           if (document.getElementById('statusText').textContent.indexOf('Berhasil') !== -1) {
-            setStatus("Arahkan kamera ke QR Code berikutnya", "normal");
+            setStatus("Arahkan kamera ke QR Code peserta berikutnya", "normal");
           }
         }, 1500);
       });
@@ -332,28 +358,31 @@
       }
 
       var promptEl = document.getElementById('cameraPrompt');
+      var overlayEl = document.getElementById('scanOverlay');
       setStatus("Meminta izin kamera...", "loading");
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setStatus("Browser tidak mendukung kamera.", "error");
+        setStatus("Browser tidak mendukung WebRTC kamera.", "error");
         return;
       }
 
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(function(stream) {
-          stream.getTracks().forEach(function(t) { t.stop(); });
-          if (promptEl) promptEl.style.display = 'none';
+        .then(function (stream) {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          if (promptEl) promptEl.classList.add('hidden');
+          if (overlayEl) overlayEl.classList.remove('hidden');
           initHtml5Scanner();
         })
-        .catch(function() {
+        .catch(function () {
           navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream2) {
-              stream2.getTracks().forEach(function(t) { t.stop(); });
-              if (promptEl) promptEl.style.display = 'none';
+            .then(function (stream2) {
+              stream2.getTracks().forEach(function (t) { t.stop(); });
+              if (promptEl) promptEl.classList.add('hidden');
+              if (overlayEl) overlayEl.classList.remove('hidden');
               initHtml5Scanner();
             })
-            .catch(function() {
-              setStatus("Izin kamera ditolak di pengaturan browser HP.", "error");
+            .catch(function () {
+              setStatus("Izin kamera ditolak di pengaturan browser HP Anda.", "error");
             });
         });
     }
@@ -370,19 +399,19 @@
       html5QrCode.start(
         { facingMode: "environment" },
         config,
-        function(decodedText) { kirimAbsensi(decodedText, ''); },
-        function() {}
-      ).then(function() {
+        function (decodedText) { kirimAbsensi(decodedText, ''); },
+        function () {}
+      ).then(function () {
         setStatus("Scanner aktif. Arahkan kamera ke QR Code peserta", "normal");
-      }).catch(function() {
+      }).catch(function () {
         html5QrCode.start(
           { facingMode: "user" },
           config,
-          function(decodedText) { kirimAbsensi(decodedText, ''); },
-          function() {}
-        ).then(function() {
+          function (decodedText) { kirimAbsensi(decodedText, ''); },
+          function () {}
+        ).then(function () {
           setStatus("Scanner aktif. Arahkan kamera ke QR Code peserta", "normal");
-        }).catch(function(err2) {
+        }).catch(function (err2) {
           setStatus("Gagal memuat kamera: " + err2, "error");
         });
       });
@@ -398,9 +427,9 @@
       document.getElementById('inputManual').value = '';
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
       parseHash();
-      loadApiMasterData();
+      fetchMasterDataFromAPI();
     });
   </script>
 </body>

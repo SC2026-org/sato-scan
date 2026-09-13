@@ -313,7 +313,12 @@ function parseHash() {
   })
 })
     .then(function (data) {
-      if (!data || !data.success || !Array.isArray(data.data)) {
+
+  console.log('RENDER DATA:', data);
+  console.log('RENDER SUCCESS:', data && data.success);
+  console.log('RENDER IS ARRAY:', data && Array.isArray(data.data));
+
+  if (!data || !data.success || !Array.isArray(data.data)) {
         throw new Error('Data cabang tidak valid.');
       }
 

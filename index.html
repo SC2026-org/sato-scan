@@ -206,15 +206,21 @@ function parseHash() {
         'Content-Type': 'text/plain;charset=utf-8'
       },
       body: JSON.stringify({
-        action: 'exchangeScannerCode',
-        exchangeCode: exchangeCode
+        action: 'getDaftarCabang'
       })
     })
       .then(function (res) {
         return res.json();
       })
       .then(function (hasil) {
-
+console.log('RENDER DATA:', data);
+  console.log('RENDER SUCCESS:', data && data.success);
+  console.log('RENDER IS ARRAY:', data && Array.isArray(data.data));
+        
+ if (!data || !data.success || !Array.isArray(data.data)) {
+    throw new Error('Data cabang tidak valid.');
+  }
+        
         // Exchange gagal
         if (!hasil || !hasil.success || !hasil.sessionToken) {
           kunciAksesIlegal(

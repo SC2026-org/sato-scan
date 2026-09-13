@@ -162,39 +162,68 @@
     var isProcessing = false;
     var isSesiTerkunci = false;
 
-    function parseHash() {
-      try {
-        var hash = window.location.hash.substring(1);
-        var btnBack = document.getElementById('btnKembali');
-        var btnAuth = document.getElementById('btnAuthLogin');
-        if (btnBack) btnBack.href = BACKEND_URL;
-        if (btnAuth) btnAuth.href = BACKEND_URL;
+function parseHash() {
+  try {
+    var hash = window.location.hash.substring(1);
+    var btnBack = document.getElementById('btnKembali');
+    var btnAuth = document.getElementById('btnAuthLogin');
 
-        if (!hash) {
-          kunciAksesIlegal("Kredensial sesi tidak ditemukan di URL.");
-          return;
-        }
+    if (btnBack) btnBack.href = BACKEND_URL;
+    if (btnAuth) btnAuth.href = BACKEND_URL;
 
-        var params = new URLSearchParams(hash);
-        var tokenParam = params.get('token') || params.get('code');
-
-        if (!tokenParam) {
-          kunciAksesIlegal("Format URL tidak valid. Token tidak ditemukan.");
-          return;
-        }
-
-        sessionToken = tokenParam;
-        
-        // Render dropdown langsung tanpa jeda
-        renderDropdownCabang();
-        
-        // Validasi sesi token secara background
-        verifikasiSesiOnline(tokenParam);
-
-      } catch (e) {
-        kunciAksesIlegal("Gagal membaca kredensial sesi.");
-      }
+    if (!hash) {
+      kunciAksesIlegal("Kredensial sesi tidak ditemukan di URL.");
+      return;
     }
+
+    var params = new URLSearchParams(hash);
+
+    // Scanner HANYA menerima Exchange Code
+    var exchangeCode = params.get('code');
+
+    if (!exchangeCode) {
+      kunciAksesIlegal("Kode sesi scanner tidak ditemukan atau tidak valid.");
+      return;
+    }
+
+    // Pastikan formatnya benar-benar EXC-
+    if (exchangeCode.indexOf('EXC-') !== 0) {
+      kunciAksesIlegal("Kode sesi scanner tidak valid.");
+      return;
+    }
+
+    // Tukarkan Exchange Code menjadi SessionToken resmi
+    google.script.run
+      .withSuccessHandler(function (hasil) {
+        if (!hasil || !hasil.success || !hasil.sessionToken) {
+          kunciAksesIlegal(
+            (hasil && hasil.message)
+              ? hasil.message
+              : "Kode sesi scanner tidak valid atau sudah kedaluwarsa."
+          );
+          return;
+        }
+
+        // Simpan SessionToken hasil pertukaran
+        sessionToken = hasil.sessionToken;
+
+        // Render setelah sesi berhasil diverifikasi
+        renderDropdownCabang();
+
+        // Verifikasi ulang SessionToken hasil exchange
+        verifikasiSesiOnline(sessionToken);
+      })
+      .withFailureHandler(function (err) {
+        kunciAksesIlegal(
+          "Gagal melakukan verifikasi sesi scanner."
+        );
+      })
+      .tukarKodeScannerKeSesi(exchangeCode);
+
+  } catch (e) {
+    kunciAksesIlegal("Gagal membaca kredensial sesi.");
+  }
+}
 
     function kunciAksesIlegal(pesan) {
       document.getElementById('unauthorizedScreen').classList.remove('hidden');

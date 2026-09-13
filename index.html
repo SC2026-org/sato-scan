@@ -58,7 +58,7 @@
       <label>Cabang</label>
       <div class="select-wrap">
         <select id="selectCabang" onchange="onCabangChange()">
-          <option value="">Pilih Cabang</option>
+          <option value="">Memuat cabang dari server...</option>
         </select>
       </div>
     </div>
@@ -83,7 +83,7 @@
         <div id="reader"></div>
         <div id="cameraPrompt" class="camera-prompt">
           <span style="font-size: 28px; margin-bottom: 6px;">📷</span>
-          <p style="color: white; font-size: 12px; margin-bottom: 12px;">Ketuk untuk mengaktifkan kamera scanner</p>
+          <p style="color: white; font-size: 12px; margin-bottom: 12px;">Ketuk untuk menyalakan scanner kamera</p>
           <button id="btnAktifkanKamera" onclick="requestCameraAccess()" class="btn-kamera">
             Aktifkan Kamera
           </button>
@@ -108,12 +108,7 @@
   <script>
     var BACKEND_URL = "https://script.google.com/macros/s/AKfycbyOwR22_3brncTkrJcrGwxufbmlXg4QfScFP2n-QefL_umC38H5PmqAfgRnzjxBy3yP1g/exec";
 
-    var MASTER_DATA = {
-      "Jakarta": ["Futsal", "Badminton", "Yoga"],
-      "Surabaya": ["Futsal", "Voli"],
-      "Bandung": ["Futsal", "Badminton"]
-    };
-
+    var LIVE_DATA_OLAHRAAGA = {};
     var tokenPetugas = "";
     var namaPetugas = "";
     var html5QrCode = null;
@@ -137,11 +132,19 @@
       } catch (e) {}
     }
 
-    function initDropdownData() {
+    // Callback JSONP Resmi dari Google Apps Script
+    window.handleMasterDataOnline = function(res) {
       var selCabang = document.getElementById('selectCabang');
+      if (!res || !res.success || !res.data) {
+        setStatus("Gagal memuat API: " + ((res && res.message) || "Koneksi terputus"), "error");
+        selCabang.innerHTML = '<option value="">Gagal memuat cabang</option>';
+        return;
+      }
+
+      LIVE_DATA_OLAHRAAGA = res.data;
       selCabang.innerHTML = '<option value="">Pilih Cabang</option>';
 
-      Object.keys(MASTER_DATA).forEach(function(c) {
+      Object.keys(LIVE_DATA_OLAHRAAGA).forEach(function(c) {
         var opt = document.createElement('option');
         opt.value = c; opt.textContent = c;
         selCabang.appendChild(opt);
@@ -150,10 +153,24 @@
       var savedCabang = (localStorage.getItem('sato_scan_cabang') || '').trim();
       var savedOlahraga = (localStorage.getItem('sato_scan_olahraga') || '').trim();
 
-      if (savedCabang && MASTER_DATA[savedCabang]) {
+      if (savedCabang && LIVE_DATA_OLAHRAAGA[savedCabang]) {
         selCabang.value = savedCabang;
         renderOlahraga(savedCabang, savedOlahraga, true);
       }
+    };
+
+    function loadApiMasterData() {
+      if (!tokenPetugas) {
+        setStatus("Akses ditolak: Token petugas tidak ditemukan. Silakan buka dari Dashboard.", "error");
+        return;
+      }
+
+      var script = document.createElement('script');
+      script.src = BACKEND_URL + "?action=getMasterOlahragaFull&token=" + encodeURIComponent(tokenPetugas) + "&callback=handleMasterDataOnline&_t=" + Date.now();
+      script.onerror = function() {
+        setStatus("Gagal terhubung ke API backend Google Apps Script.", "error");
+      };
+      document.body.appendChild(script);
     }
 
     function onCabangChange() {
@@ -163,13 +180,13 @@
 
     function renderOlahraga(cabang, autoSelectOlahraga, isAutoLock) {
       var selOlahraga = document.getElementById('selectOlahraga');
-      if (!cabang || !MASTER_DATA[cabang]) {
+      if (!cabang || !LIVE_DATA_OLAHRAAGA[cabang]) {
         selOlahraga.disabled = true;
         selOlahraga.innerHTML = '<option value="">Pilih cabang dulu</option>';
         return;
       }
 
-      var list = MASTER_DATA[cabang];
+      var list = LIVE_DATA_OLAHRAAGA[cabang];
       selOlahraga.innerHTML = '<option value="">Pilih Olahraga</option>';
 
       list.forEach(function(o) {
@@ -189,8 +206,8 @@
     function validasiSesi(c, o) {
       var valC = String(c || '').trim().toLowerCase();
       var valO = String(o || '').trim().toLowerCase();
-      if (!valC || valC.indexOf('pilih') !== -1) return false;
-      if (!valO || valO.indexOf('pilih') !== -1) return false;
+      if (!valC || valC.indexOf('pilih') !== -1 || valC.indexOf('memuat') !== -1) return false;
+      if (!valO || valO.indexOf('pilih') !== -1 || valO.indexOf('memuat') !== -1) return false;
       return true;
     }
 
@@ -306,6 +323,14 @@
     }
 
     function requestCameraAccess() {
+      var cabang = document.getElementById('selectCabang').value;
+      var olahraga = document.getElementById('selectOlahraga').value;
+
+      if (!validasiSesi(cabang, olahraga) || !isSesiTerkunci) {
+        alert("Pilih Cabang & Olahraga dan klik 'Simpan & Kunci Sesi' terlebih dahulu!");
+        return;
+      }
+
       var promptEl = document.getElementById('cameraPrompt');
       setStatus("Meminta izin kamera...", "loading");
 
@@ -375,7 +400,7 @@
 
     document.addEventListener("DOMContentLoaded", function() {
       parseHash();
-      initDropdownData();
+      loadApiMasterData();
     });
   </script>
 </body>

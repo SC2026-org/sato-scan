@@ -158,125 +158,80 @@
     var isSesiTerkunci = false;
 
 function parseHash() {
-  try {
-    var hash = window.location.hash.substring(1);
+      try {
+        var hash = window.location.hash.substring(1);
 
-    var btnBack = document.getElementById('btnKembali');
-    var btnAuth = document.getElementById('btnAuthLogin');
+        var btnBack = document.getElementById('btnKembali');
+        var btnAuth = document.getElementById('btnAuthLogin');
 
-    if (btnBack) btnBack.href = BACKEND_URL;
-    if (btnAuth) btnAuth.href = BACKEND_URL;
+        if (btnBack) btnBack.href = BACKEND_URL;
+        if (btnAuth) btnAuth.href = BACKEND_URL;
 
-    // Tidak ada hash
-    if (!hash) {
-      kunciAksesIlegal("Kredensial sesi tidak ditemukan di URL.");
-      return;
-    }
-
-    var params = new URLSearchParams(hash);
-
-    // Scanner HANYA menerima Exchange Code
-    var exchangeCode = params.get('code') || '';
-
-    // Pastikan ada exchange code
-    if (!exchangeCode) {
-      kunciAksesIlegal(
-        "Kode sesi scanner tidak ditemukan atau tidak valid."
-      );
-      return;
-    }
-
-    // Pastikan formatnya benar-benar EXC-
-    if (exchangeCode.indexOf('EXC-') !== 0) {
-      kunciAksesIlegal(
-        "Kode sesi scanner tidak valid."
-      );
-      return;
-    }
-
-    // Tukarkan Exchange Code menjadi SessionToken
-    // melalui backend Apps Script.
-    //
-    // CATATAN:
-    // Jangan gunakan google.script.run di sini,
-    // karena halaman ini berjalan di GitHub Pages.
-    fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify({
-        action: 'getDaftarCabang'
-      })
-    })
-      .then(function (res) {
-        return res.json();
-      })
-      .then(function (hasil) {
-console.log('RENDER DATA:', data);
-  console.log('RENDER SUCCESS:', data && data.success);
-  console.log('RENDER IS ARRAY:', data && Array.isArray(data.data));
-        
- if (!data || !data.success || !Array.isArray(data.data)) {
-    throw new Error('Data cabang tidak valid.');
-  }
-        
-        // Exchange gagal
-        if (!hasil || !hasil.success || !hasil.sessionToken) {
-          kunciAksesIlegal(
-            (hasil && hasil.message)
-              ? hasil.message
-              : "Kode sesi scanner tidak valid atau sudah kedaluwarsa."
-          );
+        if (!hash) {
+          kunciAksesIlegal("Kredensial sesi tidak ditemukan di URL.");
           return;
         }
 
-        // Simpan SessionToken hasil exchange
-        sessionToken = hasil.sessionToken;
+        var params = new URLSearchParams(hash);
+        var exchangeCode = params.get('code') || '';
 
-        // Setelah berhasil mendapatkan session token,
-        // tampilkan dropdown Cabang & Olahraga.
-        renderDropdownCabang();
+        if (!exchangeCode) {
+          kunciAksesIlegal("Kode sesi scanner tidak ditemukan atau tidak valid.");
+          return;
+        }
 
-        // Verifikasi ulang SessionToken ke backend.
-        verifikasiSesiOnline(sessionToken);
+        if (exchangeCode.indexOf('EXC-') !== 0) {
+          kunciAksesIlegal("Kode sesi scanner tidak valid.");
+          return;
+        }
 
-        // Hapus Exchange Code dari URL browser.
-        //
-        // Jadi setelah berhasil ditukar:
-        // #code=EXC-xxxxx
-        //
-        // tidak lagi terlihat di address bar.
-        history.replaceState(
-          null,
-          '',
-          window.location.pathname + window.location.search
-        );
-      })
-      .catch(function (err) {
-        console.error(
-          'Gagal melakukan exchange sesi:',
-          err
-        );
+        fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify({
+            action: 'exchangeScannerCode',
+            exchangeCode: exchangeCode
+          })
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (hasil) {
+            console.log('HASIL EXCHANGE:', hasil);
 
-        kunciAksesIlegal(
-          "Gagal melakukan verifikasi sesi scanner."
-        );
-      });
+            if (!hasil || !hasil.success || !hasil.sessionToken) {
+              kunciAksesIlegal(
+                (hasil && hasil.message)
+                  ? hasil.message
+                  : "Kode sesi scanner tidak valid atau sudah kedaluwarsa."
+              );
+              return;
+            }
 
-  } catch (e) {
-    console.error(
-      'Gagal parse hash:',
-      e
-    );
+            sessionToken = hasil.sessionToken;
+            renderDropdownCabang();
+            verifikasiSesiOnline(sessionToken);
 
-    kunciAksesIlegal(
-      "Gagal membaca kredensial sesi."
-    );
-  }
-}
+            history.replaceState(
+              null,
+              '',
+              window.location.pathname + window.location.search
+            );
+          })
+          .catch(function (err) {
+            console.error('Gagal melakukan exchange sesi:', err);
+            kunciAksesIlegal("Gagal melakukan verifikasi sesi scanner.");
+          });
 
-    function kunciAksesIlegal(pesan) {
+      } catch (e) {
+        console.error('Gagal parse hash:', e);
+        kunciAksesIlegal("Gagal membaca kredensial sesi.");
+      }
+    }
+
+        function kunciAksesIlegal(pesan) {
       document.getElementById('unauthorizedScreen').classList.remove('hidden');
       document.getElementById('mainScannerContent').classList.add('hidden');
       if (pesan) document.getElementById('unauthorizedMsg').textContent = pesan;
@@ -293,105 +248,138 @@ console.log('RENDER DATA:', data);
     };
 
     function verifikasiSesiOnline(token) {
-      var script = document.createElement('script');
-      script.src = BACKEND_URL + "?action=validateSession&token=" + encodeURIComponent(token) + "&callback=onSessionVerified&_t=" + Date.now();
-      script.onerror = function() {
-        // Fallback fetch jika script tag gagal
-        fetch(BACKEND_URL + "?action=validateSession&token=" + encodeURIComponent(token))
-          .then(function(res) { return res.json(); })
-          .then(function(data) { window.onSessionVerified(data); })
-          .catch(function() {});
-      };
-      document.body.appendChild(script);
+      fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action: 'validateSession',
+          sessionToken: token
+        })
+      })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          window.onSessionVerified(data);
+        })
+        .catch(function (err) {
+          console.error('Gagal validasi sesi:', err);
+          kunciAksesIlegal('Gagal memvalidasi sesi scanner.');
+        });
     }
 
-    function renderDropdownCabang() {
-  var selCabang = document.getElementById('selectCabang');
-  selCabang.innerHTML = '<option value="">Memuat Cabang...</option>';
+        function renderDropdownCabang() {
+      var selCabang = document.getElementById('selectCabang');
+      selCabang.innerHTML = '<option value="">Memuat Cabang...</option>';
 
-  fetch(BACKEND_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
-    },
-    body: JSON.stringify({
-      action: 'getDaftarCabang'
-    })
-  })
-  .then(function (res) {
-    return res.json();
-  })
-  .then(function (data) {
+      fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action: 'getDaftarCabang'
+        })
+      })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data || !data.success || !Array.isArray(data.data)) {
+            throw new Error('Data cabang tidak valid.');
+          }
 
-    console.log('RENDER DATA:', data);
-    console.log('RENDER SUCCESS:', data && data.success);
-    console.log('RENDER IS ARRAY:', data && Array.isArray(data.data));
+          selCabang.innerHTML = '<option value="">Pilih Cabang</option>';
 
-    if (!data || !data.success || !Array.isArray(data.data)) {
-      throw new Error('Data cabang tidak valid.');
+          data.data.forEach(function (cabang) {
+            var opt = document.createElement('option');
+            opt.value = cabang;
+            opt.textContent = cabang;
+            selCabang.appendChild(opt);
+          });
+
+          var savedCabang =
+            (localStorage.getItem('sato_scan_cabang') || '').trim();
+
+          var savedOlahraga =
+            (localStorage.getItem('sato_scan_olahraga') || '').trim();
+
+          if (savedCabang && data.data.indexOf(savedCabang) !== -1) {
+            selCabang.value = savedCabang;
+            renderOlahraga(savedCabang, savedOlahraga, true);
+          }
+        })
+        .catch(function (err) {
+          console.error('Gagal memuat cabang:', err);
+          selCabang.innerHTML =
+            '<option value="">Gagal memuat cabang</option>';
+        });
     }
 
-    selCabang.innerHTML = '<option value="">Pilih Cabang</option>';
-
-    data.data.forEach(function (cabang) {
-      var opt = document.createElement('option');
-      opt.value = cabang;
-      opt.textContent = cabang;
-      selCabang.appendChild(opt);
-    });
-
-    var savedCabang =
-      (localStorage.getItem('sato_scan_cabang') || '').trim();
-
-    var savedOlahraga =
-      (localStorage.getItem('sato_scan_olahraga') || '').trim();
-
-    if (savedCabang && data.data.indexOf(savedCabang) !== -1) {
-      selCabang.value = savedCabang;
-      renderOlahraga(savedCabang, savedOlahraga, true);
-    }
-
-  })
-  .catch(function (err) {
-    console.error('Gagal memuat cabang:', err);
-    selCabang.innerHTML =
-      '<option value="">Gagal memuat cabang</option>';
-  });
-}
-    function onCabangChange() {
+        function onCabangChange() {
       var cabang = (document.getElementById('selectCabang').value || '').trim();
       renderOlahraga(cabang, null, false);
     }
 
     function renderOlahraga(cabang, autoSelectOlahraga, isAutoLock) {
       var selOlahraga = document.getElementById('selectOlahraga');
-      if (!cabang || !LIVE_DATA_MASTER[cabang]) {
+
+      if (!cabang) {
         selOlahraga.disabled = true;
         selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 focus:outline-none text-xs font-semibold transition';
         selOlahraga.innerHTML = '<option value="">Pilih cabang dulu</option>';
         return;
       }
 
-      var list = LIVE_DATA_MASTER[cabang];
-      selOlahraga.innerHTML = '<option value="">Pilih Olahraga</option>';
+      selOlahraga.disabled = true;
+      selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 focus:outline-none text-xs font-semibold transition';
+      selOlahraga.innerHTML = '<option value="">Memuat Olahraga...</option>';
 
-      list.forEach(function (o) {
-        var opt = document.createElement('option');
-        opt.value = o;
-        opt.textContent = o;
-        selOlahraga.appendChild(opt);
-      });
+      fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action: 'getOlahragaByCabang',
+          cabang: cabang
+        })
+      })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data || !data.success || !Array.isArray(data.data)) {
+            throw new Error('Data olahraga tidak valid.');
+          }
 
-      selOlahraga.disabled = false;
-      selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-forest text-xs font-semibold text-gray-700 transition';
+          selOlahraga.innerHTML = '<option value="">Pilih Olahraga</option>';
 
-      if (autoSelectOlahraga && list.indexOf(autoSelectOlahraga) !== -1) {
-        selOlahraga.value = autoSelectOlahraga;
-        if (isAutoLock) kunciSesiUI(true);
-      }
+          data.data.forEach(function (olahraga) {
+            var opt = document.createElement('option');
+            opt.value = olahraga;
+            opt.textContent = olahraga;
+            selOlahraga.appendChild(opt);
+          });
+
+          selOlahraga.disabled = false;
+          selOlahraga.className = 'w-full appearance-none px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-forest text-xs font-semibold text-gray-700 transition';
+
+          if (autoSelectOlahraga && data.data.indexOf(autoSelectOlahraga) !== -1) {
+            selOlahraga.value = autoSelectOlahraga;
+            if (isAutoLock) kunciSesiUI(true);
+          }
+        })
+        .catch(function (err) {
+          console.error('Gagal memuat olahraga:', err);
+          selOlahraga.disabled = true;
+          selOlahraga.innerHTML = '<option value="">Gagal memuat olahraga</option>';
+        });
     }
 
-    function validasiSesi(c, o) {
+        function validasiSesi(c, o) {
       var valC = String(c || '').trim().toLowerCase();
       var valO = String(o || '').trim().toLowerCase();
       if (!valC || valC.indexOf('pilih') !== -1 || valC.indexOf('memuat') !== -1) return false;

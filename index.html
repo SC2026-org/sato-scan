@@ -165,12 +165,14 @@
 function parseHash() {
   try {
     var hash = window.location.hash.substring(1);
+
     var btnBack = document.getElementById('btnKembali');
     var btnAuth = document.getElementById('btnAuthLogin');
 
     if (btnBack) btnBack.href = BACKEND_URL;
     if (btnAuth) btnAuth.href = BACKEND_URL;
 
+    // Tidak ada hash
     if (!hash) {
       kunciAksesIlegal("Kredensial sesi tidak ditemukan di URL.");
       return;
@@ -179,22 +181,46 @@ function parseHash() {
     var params = new URLSearchParams(hash);
 
     // Scanner HANYA menerima Exchange Code
-    var exchangeCode = params.get('code');
+    var exchangeCode = params.get('code') || '';
 
+    // Pastikan ada exchange code
     if (!exchangeCode) {
-      kunciAksesIlegal("Kode sesi scanner tidak ditemukan atau tidak valid.");
+      kunciAksesIlegal(
+        "Kode sesi scanner tidak ditemukan atau tidak valid."
+      );
       return;
     }
 
     // Pastikan formatnya benar-benar EXC-
     if (exchangeCode.indexOf('EXC-') !== 0) {
-      kunciAksesIlegal("Kode sesi scanner tidak valid.");
+      kunciAksesIlegal(
+        "Kode sesi scanner tidak valid."
+      );
       return;
     }
 
-    // Tukarkan Exchange Code menjadi SessionToken resmi
-    google.script.run
-      .withSuccessHandler(function (hasil) {
+    // Tukarkan Exchange Code menjadi SessionToken
+    // melalui backend Apps Script.
+    //
+    // CATATAN:
+    // Jangan gunakan google.script.run di sini,
+    // karena halaman ini berjalan di GitHub Pages.
+    fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify({
+        action: 'exchangeScannerCode',
+        exchangeCode: exchangeCode
+      })
+    })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (hasil) {
+
+        // Exchange gagal
         if (!hasil || !hasil.success || !hasil.sessionToken) {
           kunciAksesIlegal(
             (hasil && hasil.message)
@@ -204,24 +230,48 @@ function parseHash() {
           return;
         }
 
-        // Simpan SessionToken hasil pertukaran
+        // Simpan SessionToken hasil exchange
         sessionToken = hasil.sessionToken;
 
-        // Render setelah sesi berhasil diverifikasi
+        // Setelah berhasil mendapatkan session token,
+        // tampilkan dropdown Cabang & Olahraga.
         renderDropdownCabang();
 
-        // Verifikasi ulang SessionToken hasil exchange
+        // Verifikasi ulang SessionToken ke backend.
         verifikasiSesiOnline(sessionToken);
+
+        // Hapus Exchange Code dari URL browser.
+        //
+        // Jadi setelah berhasil ditukar:
+        // #code=EXC-xxxxx
+        //
+        // tidak lagi terlihat di address bar.
+        history.replaceState(
+          null,
+          '',
+          window.location.pathname + window.location.search
+        );
       })
-      .withFailureHandler(function (err) {
+      .catch(function (err) {
+        console.error(
+          'Gagal melakukan exchange sesi:',
+          err
+        );
+
         kunciAksesIlegal(
           "Gagal melakukan verifikasi sesi scanner."
         );
-      })
-      .tukarKodeScannerKeSesi(exchangeCode);
+      });
 
   } catch (e) {
-    kunciAksesIlegal("Gagal membaca kredensial sesi.");
+    console.error(
+      'Gagal parse hash:',
+      e
+    );
+
+    kunciAksesIlegal(
+      "Gagal membaca kredensial sesi."
+    );
   }
 }
 

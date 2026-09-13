@@ -300,24 +300,44 @@ function parseHash() {
     }
 
     function renderDropdownCabang() {
-      var selCabang = document.getElementById('selectCabang');
+  var selCabang = document.getElementById('selectCabang');
+  selCabang.innerHTML = '<option value="">Memuat Cabang...</option>';
+
+  fetch(BACKEND_URL + '?action=getDaftarCabang')
+    .then(function (res) {
+      return res.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success || !Array.isArray(data.data)) {
+        throw new Error('Data cabang tidak valid.');
+      }
+
       selCabang.innerHTML = '<option value="">Pilih Cabang</option>';
 
-      Object.keys(LIVE_DATA_MASTER).forEach(function (cabang) {
+      data.data.forEach(function (cabang) {
         var opt = document.createElement('option');
         opt.value = cabang;
         opt.textContent = cabang;
         selCabang.appendChild(opt);
       });
 
-      var savedCabang = (localStorage.getItem('sato_scan_cabang') || '').trim();
-      var savedOlahraga = (localStorage.getItem('sato_scan_olahraga') || '').trim();
+      var savedCabang =
+        (localStorage.getItem('sato_scan_cabang') || '').trim();
 
-      if (savedCabang && LIVE_DATA_MASTER[savedCabang]) {
+      var savedOlahraga =
+        (localStorage.getItem('sato_scan_olahraga') || '').trim();
+
+      if (savedCabang && data.data.indexOf(savedCabang) !== -1) {
         selCabang.value = savedCabang;
         renderOlahraga(savedCabang, savedOlahraga, true);
       }
-    }
+    })
+    .catch(function (err) {
+      console.error('Gagal memuat cabang:', err);
+      selCabang.innerHTML =
+        '<option value="">Gagal memuat cabang</option>';
+    });
+}
 
     function onCabangChange() {
       var cabang = (document.getElementById('selectCabang').value || '').trim();
